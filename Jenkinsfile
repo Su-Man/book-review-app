@@ -45,12 +45,16 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo 'Deploying Flask app container...'
+                echo 'Building and running Docker container...'
                 sh '''
-                    docker run -d -p 5000:5000 --name book-review-app book-review-app
+                    docker stop book_review_container || true
+                    docker rm book_review_container || true
+                    docker build -t book-review-app .
+                    docker run -d -p 5000:5000 --name book_review_container book-review-app
                 '''
             }
         }
+
 
         stage('Release') {
             steps {
