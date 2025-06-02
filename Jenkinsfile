@@ -58,16 +58,21 @@ pipeline {
             steps {
                 echo 'Tagging Docker image with v1.0...'
                 sh 'docker tag book-review-app sumangautam/book-review-app:1.0'
-
+        
                 echo 'Logging in to DockerHub...'
-                sh '''
-                    echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
-                '''
-
+                sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
+        
                 echo 'Pushing image to DockerHub...'
                 sh 'docker push sumangautam/book-review-app:1.0'
+        
+                echo 'Stopping any old container...'
+                sh 'docker rm -f book-review-test || true'
+        
+                echo 'Running container on test environment...'
+                sh 'docker run -d --name book-review-test -p 5000:5000 sumangautam/book-review-app:1.0'
             }
         }
+
 
         stage('Release') {
             steps {
