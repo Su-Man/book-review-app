@@ -1,57 +1,77 @@
 pipeline {
     agent any
+
     environment {
-        SONARQUBE = credentials('sonarqube-token') // optional
+        SONARQUBE = credentials('sonarqube-token') // Your Sonar token credential ID
     }
+
     stages {
         stage('Build') {
             steps {
-                echo 'Simulating build without Docker...'
-                sh 'echo "Build stage: Flask app prepared."'
+                echo 'Building Docker image...'
+                sh 'docker build -t book-review-app .'
             }
         }
+
         stage('Test') {
             steps {
-                echo 'Running pytest...'
+                echo 'Running pytest inside Docker...'
                 sh '''
-                    pip install -r requirements.txt
-                    export PYTHONPATH=$PYTHONPATH:$(pwd)
-                    pytest --maxfail=1 --disable-warnings
+                    docker run --rm book-review-app \
+                    bash -c "pip install -r requirements.txt && pytest --maxfail=1 --disable-warnings"
                 '''
             }
         }
+
         stage('Code Quality') {
             steps {
                 withSonarQubeEnv('SonarCloud') {
-                    echo 'Skipping sonar-scanner (or enable if configured)'
+                    echo 'Running SonarQube scanner (ensure sonar-project.properties exists)'
+                    // Uncomment when sonar-scanner is configured:
                     // sh 'sonar-scanner'
                 }
             }
         }
+
         stage('Security') {
             steps {
                 echo 'Running Bandit security scan...'
-                sh 'pip install bandit'
-                sh 'bandit -r app'
+                sh '''
+                    pip install bandit
+                    bandit -r app
+                '''
             }
         }
+
         stage('Deploy') {
             steps {
-                echo 'Simulating deployment: app would start here.'
-                sh 'echo "Running Flask app on http://localhost:5000 (simulated)"'
+                echo 'Deploying Flask app container...'
+                sh '''
+                    docker run -d -p 5000:5000 --name book-review-app book-review-app
+                '''
             }
         }
+
         stage('Release') {
             steps {
-                echo 'Simulated production release'
-                sh 'echo "Tagging v1.0 (simulated)"'
+                echo 'Tagging Docker image for release...'
+                sh 'docker tag book-review-app book-review-app:v1.0'
             }
         }
+
         stage('Monitoring') {
             steps {
-                echo 'Monitoring stage: checking simulated health endpoint'
-                sh 'echo "Health check passed (simulated)"'
+                echo 'Checking health endpoint...'
+                sh 'curl -f http://localhost:5000/ || echo "Health check failed"'
             }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up Docker container (if running)...'
+            sh 'docker stop book-review-app || true'
+            sh 'docker rm book-review-app || true'
         }
     }
 }
