@@ -13,8 +13,10 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Running pytest...'
-                sh 'pip install -r requirements.txt'
-                sh 'pytest --maxfail=1 --disable-warnings'
+                sh '''
+                    pip install -r requirements.txt
+                    export PYTHONPATH=$PYTHONPATH:$(pwd)
+                    pytest --maxfail=1 --disable-warnings
             }
         }
         stage('Code Quality') {
