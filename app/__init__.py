@@ -1,3 +1,7 @@
+# Add Datadog tracing at the top
+from ddtrace import patch_all, tracer
+patch_all()
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
