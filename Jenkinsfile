@@ -4,6 +4,7 @@ pipeline {
     environment {
         SONAR_TOKEN = credentials('SONAR_TOKEN')
         DOCKERHUB_CREDS = credentials('dockerhub-creds')
+        DD_API_KEY = credentials('datadog-api-key')
     }
 
     stages {
@@ -84,9 +85,16 @@ pipeline {
 
         stage('Monitoring') {
             steps {
-                echo 'Health Check (simulated)...'
-                sh 'curl --fail http://localhost:5000 || echo "Service not running yet (simulation)"'
+                echo 'Sending health check to Datadog...'
+                sh '''
+                    curl -X POST "https://api.datadoghq.com/api/v1/events" \
+                    -H "Content-Type: application/json" \
+                    -H "DD-API-KEY: $DD_API_KEY" \
+                    -d '{
+                          "title": "Book Review App Deployment",
+                          "text": "Jenkins deployed version 1.0 to production successfully.",
+                          "alert_type": "info"
+                        }'
+                '''
             }
         }
-    }
-}
