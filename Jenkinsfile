@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     environment {
-        SONAR_TOKEN = credentials('SONAR_TOKEN') // or 'sonarqube-token' if that's what you use
+        SONAR_TOKEN = credentials('SONAR_TOKEN')
+        DOCKERHUB_CREDS = credentials('dockerhub-creds')
     }
 
     stages {
@@ -55,22 +56,31 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo 'Simulated Deployment'
-                sh 'echo "Flask app would run on port 5000 inside container."'
+                echo 'Tagging Docker image with v1.0...'
+                sh 'docker tag book-review-app sumangautam/book-review-app:1.0'
+
+                echo 'Logging in to DockerHub...'
+                sh '''
+                    echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
+                '''
+
+                echo 'Pushing image to DockerHub...'
+                sh 'docker push sumangautam/book-review-app:1.0'
             }
         }
 
         stage('Release') {
             steps {
-                echo 'Simulated Release'
-                sh 'echo "Tagging v1.0 for production (simulated)"'
+                echo 'Releasing version v1.0 to production...'
+                sh 'docker tag book-review-app sumangautam/book-review-app:latest'
+                sh 'docker push sumangautam/book-review-app:latest'
             }
         }
 
         stage('Monitoring') {
             steps {
-                echo 'Simulated Monitoring'
-                sh 'echo "Health check passed (simulated)"'
+                echo 'Health Check (simulated)...'
+                sh 'curl --fail http://localhost:5000 || echo "Service not running yet (simulation)"'
             }
         }
     }
