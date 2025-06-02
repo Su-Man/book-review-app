@@ -4,3 +4,4 @@ Flask-SQLAlchemy==3.0.3
 pytest==7.4.4
 Werkzeug==2.3.8
 bandit==1.7.5
+ddtrace==2.4.1
