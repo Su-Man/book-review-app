@@ -1,8 +1,10 @@
 pipeline {
     agent any
+
     environment {
-        SONARQUBE = credentials('sonarqube-token') // optional
+        SONAR_TOKEN = credentials('SONAR_TOKEN') // or 'sonarqube-token' if that's what you use
     }
+
     stages {
         stage('Build') {
             steps {
@@ -10,6 +12,7 @@ pipeline {
                 sh 'docker build -t book-review-app .'
             }
         }
+
         stage('Test') {
             steps {
                 echo 'Running tests inside Docker container...'
@@ -22,14 +25,22 @@ pipeline {
                 '''
             }
         }
+
         stage('Code Quality') {
             steps {
                 withSonarQubeEnv('SonarCloud') {
-                    echo 'Running SonarQube analysis (optional)'
-                    // sh 'sonar-scanner' // enable if sonar-scanner is set up
+                    echo 'Running SonarQube scanner...'
+                    sh '''
+                        sonar-scanner \
+                          -Dsonar.projectKey=Su-Man_book-review-app \
+                          -Dsonar.sources=app \
+                          -Dsonar.host.url=https://sonarcloud.io \
+                          -Dsonar.login=$SONAR_TOKEN
+                    '''
                 }
             }
         }
+
         stage('Security') {
             steps {
                 echo 'Running Bandit inside Docker...'
@@ -41,18 +52,21 @@ pipeline {
                 '''
             }
         }
+
         stage('Deploy') {
             steps {
                 echo 'Simulated Deployment'
                 sh 'echo "Flask app would run on port 5000 inside container."'
             }
         }
+
         stage('Release') {
             steps {
                 echo 'Simulated Release'
                 sh 'echo "Tagging v1.0 for production (simulated)"'
             }
         }
+
         stage('Monitoring') {
             steps {
                 echo 'Simulated Monitoring'
