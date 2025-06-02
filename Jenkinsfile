@@ -22,7 +22,7 @@ pipeline {
         }
         stage('Code Quality') {
             steps {
-                withSonarQubeEnv('MySonarQubeServer') {
+                withSonarQubeEnv('SonarCloud') {
                     echo 'Skipping sonar-scanner (or enable if configured)'
                     // sh 'sonar-scanner'
                 }
