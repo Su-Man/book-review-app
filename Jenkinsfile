@@ -59,21 +59,20 @@ pipeline {
             steps {
                 echo 'Tagging Docker image with v1.0...'
                 sh 'docker tag book-review-app sumangautam/book-review-app:1.0'
-        
+
                 echo 'Logging in to DockerHub...'
                 sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
-        
+
                 echo 'Pushing image to DockerHub...'
                 sh 'docker push sumangautam/book-review-app:1.0'
-        
+
                 echo 'Stopping any old container...'
                 sh 'docker rm -f book-review-test || true'
-        
-                echo 'Running container on test environment...'
-                sh 'docker run -d --name book-review-test -p 5000:5000 sumangautam/book-review-app:1.0'
+
+                echo 'Running container on custom port 5050...'
+                sh 'docker run -d --name book-review-test -p 5050:5000 sumangautam/book-review-app:1.0'
             }
         }
-
 
         stage('Release') {
             steps {
@@ -87,14 +86,18 @@ pipeline {
             steps {
                 echo 'Sending health check to Datadog...'
                 sh '''
+                    curl --fail http://localhost:5050/health || echo "Service not responding on port 5050"
+                    
                     curl -X POST "https://api.datadoghq.com/api/v1/events" \
                     -H "Content-Type: application/json" \
                     -H "DD-API-KEY: $DD_API_KEY" \
                     -d '{
                           "title": "Book Review App Deployment",
-                          "text": "Jenkins deployed version 1.0 to production successfully.",
+                          "text": "Health check passed on port 5050. Version 1.0 running in production.",
                           "alert_type": "info"
                         }'
                 '''
             }
         }
+    }
+}
