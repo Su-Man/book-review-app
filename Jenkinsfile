@@ -17,11 +17,15 @@ pipeline {
             steps {
                 echo 'Running pytest inside Docker...'
                 sh '''
-                    docker run --rm book-review-app \
-                    bash -c "pip install -r requirements.txt && pytest --maxfail=1 --disable-warnings"
+                    docker run --rm \
+                      -e PYTHONPATH=/app \
+                      -v "$PWD":/app \
+                      book-review-app \
+                      bash -c "pytest --maxfail=1 --disable-warnings"
                 '''
             }
         }
+
 
         stage('Code Quality') {
             steps {
