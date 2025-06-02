@@ -17,6 +17,7 @@ pipeline {
                     pip install -r requirements.txt
                     export PYTHONPATH=$PYTHONPATH:$(pwd)
                     pytest --maxfail=1 --disable-warnings
+                '''
             }
         }
         stage('Code Quality') {
